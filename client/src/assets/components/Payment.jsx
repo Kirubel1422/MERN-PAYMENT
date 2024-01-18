@@ -1,5 +1,4 @@
 import axios from "axios";
-import React from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 const Payment = () => {
@@ -8,66 +7,60 @@ const Payment = () => {
       "AWZhVSinRH63vYWU1zsoxQJDzkCTsxC2Fkl-1dAd5iXq_0gn9bXVKMVmB9OE-9mdbnd-OF7zktNQzb8m",
     currency: "USD",
   };
-
+  const url = "http://localhost:3000/api/orders";
+  let orderId;
   return (
     <PayPalScriptProvider options={initialOptions}>
-      <PayPalScriptProvider options={initialOptions}>
-        <PayPalButtons
-          style={{ layout: "horizontal" }}
-          createOrder={(data, actions) => {
-            return axios
-              .post(
-                "http://localhost:3000/api/orders",
-                {
-                  amount: {
-                    currency_code: "USD",
-                    value: "110",
-                  },
+      <PayPalButtons
+        style={{ layout: "horizontal" }}
+        createOrder={async (data, actions) => {
+          try {
+            const response = await axios.post(
+              url,
+              {
+                amount: {
+                  currency_code: "USD",
+                  value: "500",
                 },
-                {
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                }
-              )
-              .then((response) => {
-                const orderId = response.data.orderId;
-                if (!orderId) {
-                  throw new Error("Failed to get a valid order ID");
-                }
-                return orderId;
-              })
-              .catch((error) => {
-                console.error(error);
-                throw new Error("Failed to create PayPal order");
-              });
-          }}
-          onApprove={(data, actions) => {
-            return axios
-              .post(
-                `http://localhost:3000/api/orders/${data.orderId}/capture`,
-                {
-                  orderId: data.orderID,
+              },
+              {
+                headers: {
+                  "Content-Type": "application/json",
                 },
-                {
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                }
-              )
-              .then((response) => response.data)
-              .then((data) => {
-                console.log("Success!", data);
-              })
-              .catch((error) => {
-                console.log("Error capturing the order", error);
-              });
-          }}
-          onError={(err) => {
-            console.error("Payment failed. Please try again after sometime.");
-          }}
-        />
-      </PayPalScriptProvider>
+              }
+            );
+            orderId = response.data.orderId;
+            if (!orderId) {
+              throw Error("Cannot get orderId");
+            }
+            return orderId;
+          } catch (error) {
+            throw Error("Failed to create paypal order.");
+          }
+        }}
+        onApprove={async (data, actions) => {
+          try {
+            const response = await axios.post(
+              `${url}/${orderId ? orderId : data.orderID}/capture`,
+              {},
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            return response.data;
+          } catch (err) {
+            console.error(err);
+          }
+        }}
+        onError={(err) => {
+          console.error(
+            "Payment failed. Please try again after sometime.",
+            err
+          );
+        }}
+      />
     </PayPalScriptProvider>
   );
 };

@@ -22,7 +22,7 @@ const generateAccessToken = async () => {
         },
       }
     );
-    const data = await response.data;
+    const data = response.data;
     return data.access_token;
   } catch (error) {
     console.error("Failed to generate Access Token:", error);
@@ -50,6 +50,7 @@ const createOrder = async (cart) => {
       "Content-Type": "application/json",
     },
   };
+
   try {
     const response = await axios.post(url, JSON.stringify(payload), config);
     return handleResponse(response);
@@ -73,7 +74,6 @@ const captureOrder = async (orderID) => {
     }
   );
 
-  console.log(response);
   return handleResponse(response);
 };
 
